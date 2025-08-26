@@ -915,7 +915,10 @@ public class ConfigManager {
 			config.addDefault("Abilities.Air.AirBlast.CanFlickLevers", true);
 			config.addDefault("Abilities.Air.AirBlast.CanOpenDoors", true);
 			config.addDefault("Abilities.Air.AirBlast.CanPressButtons", true);
-			config.addDefault("Abilities.Air.AirBlast.CanCoolLava", true);
+			config.addDefault("Abilities.Air.AirBlast.CanExtinguishBlocks", true);
+			config.addDefault("Abilities.Air.AirBlast.CanCoolLava.Enabled", true);
+			config.addDefault("Abilities.Air.AirBlast.CanCoolLava.Duration", 36000);
+			config.addDefault("Abilities.Air.AirBlast.CanCoolLava.Permanent", false);
 
 			config.addDefault("Abilities.Air.AirBurst.Enabled", true);
 			config.addDefault("Abilities.Air.AirBurst.FallThreshold", 10);

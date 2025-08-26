@@ -50,7 +50,10 @@ public class AirBlast extends AirAbility {
 	private boolean canFlickLevers;
 	private boolean canOpenDoors;
 	private boolean canPressButtons;
+	private boolean canExtinguishBlocks;
 	private boolean canCoolLava;
+	private long canCoolLavaDuration;
+	private boolean permCoolLava;
 	private boolean isFromOtherOrigin;
 	private boolean showParticles;
 	private int ticks;
@@ -130,6 +133,7 @@ public class AirBlast extends AirAbility {
 		this.canOpenDoors = false;
 		this.canPressButtons = false;
 		this.canFlickLevers = false;
+		this.canExtinguishBlocks = true;
 
 		if (this.bPlayer.isAvatarState()) {
 			this.pushFactor = getConfig().getDouble("Abilities.Avatar.AvatarState.Air.AirBlast.Push.Self");
@@ -153,7 +157,10 @@ public class AirBlast extends AirAbility {
 		this.canFlickLevers = getConfig().getBoolean("Abilities.Air.AirBlast.CanFlickLevers");
 		this.canOpenDoors = getConfig().getBoolean("Abilities.Air.AirBlast.CanOpenDoors");
 		this.canPressButtons = getConfig().getBoolean("Abilities.Air.AirBlast.CanPressButtons");
-		this.canCoolLava = getConfig().getBoolean("Abilities.Air.AirBlast.CanCoolLava");
+		this.canExtinguishBlocks = getConfig().getBoolean("Abilities.Air.AirBlast.CanExtinguishBlocks");
+		this.canCoolLava = getConfig().getBoolean("Abilities.Air.AirBlast.CanCoolLava.Enabled");
+		this.canCoolLavaDuration = getConfig().getLong("Abilities.Air.AirBlast.CanCoolLava.Duration");
+		this.permCoolLava = getConfig().getBoolean("Abilities.Air.AirBlast.CanCoolLava.Permanent");
 
 		this.isFromOtherOrigin = false;
 		this.showParticles = true;
@@ -225,13 +232,19 @@ public class AirBlast extends AirAbility {
 		}
 
 		if ((!block.isPassable() || block.isLiquid()) && !this.affectedLevers.contains(block)) {
-			if (block.getType() == Material.LAVA && this.canCoolLava) {
+			if (this.canCoolLava && block.getType() == Material.LAVA) {
 				if (LavaFlow.isLavaFlowBlock(block)) {
 					LavaFlow.removeBlock(block); // TODO: Make more generic for future lava generating moves.
-				} else if (block.getBlockData() instanceof Levelled && ((Levelled) block.getBlockData()).getLevel() == 0) {
-					new TempBlock(block, Material.OBSIDIAN);
 				} else {
-					new TempBlock(block, Material.COBBLESTONE);
+					TempBlock tempBlock;
+					if (((Levelled) block.getBlockData()).getLevel() == 0)
+						tempBlock = new TempBlock(block, Material.OBSIDIAN);
+					else
+						tempBlock = new TempBlock(block, Material.COBBLESTONE);
+					tempBlock.getBlock().getWorld().playSound(tempBlock.getLocation(), Sound.BLOCK_LAVA_EXTINGUISH, 0.2F, 1);
+					if (!this.permCoolLava) {
+						tempBlock.setRevertTime(this.canCoolLavaDuration);
+					}
 				}
 			}
 			this.remove();
@@ -388,7 +401,7 @@ public class AirBlast extends AirAbility {
 			return false;
 		}
 
-		if (Arrays.asList(DOORS).contains(testblock.getType())) {
+		if (this.canOpenDoors && Arrays.asList(DOORS).contains(testblock.getType())) {
 			if (testblock.getBlockData() instanceof Door) {
 				final Door door = (Door) testblock.getBlockData();
 				final BlockFace face = door.getFacing();
@@ -418,7 +431,7 @@ public class AirBlast extends AirAbility {
 				testblock.getWorld().playSound(testblock.getLocation(), Sound.valueOf("BLOCK_WOODEN_DOOR_" + (door.isOpen() ? "OPEN" : "CLOSE")), 0.5f, 0);
 				this.affectedLevers.add(testblock);
 			}
-		} else if (Arrays.asList(TDOORS).contains(testblock.getType())) {
+		} else if (this.canOpenDoors && Arrays.asList(TDOORS).contains(testblock.getType())) {
 			if (testblock.getBlockData() instanceof TrapDoor) {
 				final TrapDoor tDoor = (TrapDoor) testblock.getBlockData();
 
@@ -436,7 +449,7 @@ public class AirBlast extends AirAbility {
 				testblock.setBlockData(tDoor);
 				testblock.getWorld().playSound(testblock.getLocation(), Sound.valueOf("BLOCK_WOODEN_TRAPDOOR_" + (tDoor.isOpen() ? "OPEN" : "CLOSE")), 0.5f, 0);
 			}
-		} else if (Arrays.asList(BUTTONS).contains(testblock.getType())) {
+		} else if (this.canPressButtons && Arrays.asList(BUTTONS).contains(testblock.getType())) {
 			if (testblock.getBlockData() instanceof Switch) {
 				final Switch button = (Switch) testblock.getBlockData();
 				if (!button.isPowered()) {
@@ -459,7 +472,7 @@ public class AirBlast extends AirAbility {
 
 				testblock.getWorld().playSound(testblock.getLocation(), Sound.BLOCK_WOODEN_BUTTON_CLICK_ON, 0.5f, 0);
 			}
-		} else if (testblock.getType() == Material.LEVER) {
+		} else if (this.canFlickLevers && testblock.getType() == Material.LEVER) {
 			if (testblock.getBlockData() instanceof Switch) {
 				final Switch lever = (Switch) testblock.getBlockData();
 				lever.setPowered(!lever.isPowered());
@@ -467,7 +480,7 @@ public class AirBlast extends AirAbility {
 				this.affectedLevers.add(testblock);
 				testblock.getWorld().playSound(testblock.getLocation(), Sound.BLOCK_LEVER_CLICK, 0.5f, 0);
 			}
-		} else if (testblock.getType().toString().contains("CANDLE") || testblock.getType().toString().contains("CAMPFIRE") || testblock.getType() == Material.REDSTONE_WALL_TORCH) {
+		} else if (this.canExtinguishBlocks && (testblock.getType().toString().contains("CANDLE") || testblock.getType().toString().contains("CAMPFIRE") || testblock.getType() == Material.REDSTONE_WALL_TORCH)) {
 			if (testblock.getBlockData() instanceof Lightable) {
 				final Lightable lightable = (Lightable) testblock.getBlockData();
 				if (lightable.isLit()) {
