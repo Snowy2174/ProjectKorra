@@ -7,11 +7,7 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.projectkorra.projectkorra.region.RegionProtection;
-import org.bukkit.Effect;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.Tag;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Levelled;
@@ -53,7 +49,7 @@ public class AirBlast extends AirAbility {
 	private boolean canExtinguishBlocks;
 	private boolean canCoolLava;
 	private long canCoolLavaDuration;
-	private boolean permCoolLava;
+	private boolean revertCoolLava;
 	private boolean isFromOtherOrigin;
 	private boolean showParticles;
 	private int ticks;
@@ -126,14 +122,13 @@ public class AirBlast extends AirAbility {
 
 		this.setFields();
 
+		this.canExtinguishBlocks = burst.getCanExtinguishBlocks();
+		this.canOpenDoors = burst.getCanOpenDoors();
+		this.canPressButtons = burst.getCanPressButtons();
+		this.canFlickLevers = burst.getCanFlickLevers();
+
 		this.affectedLevers = new ArrayList<>();
 		this.affectedEntities = new ArrayList<>();
-
-		// prevent the airburst related airblasts from triggering doors/levers/buttons.
-		this.canOpenDoors = false;
-		this.canPressButtons = false;
-		this.canFlickLevers = false;
-		this.canExtinguishBlocks = true;
 
 		if (this.bPlayer.isAvatarState()) {
 			this.pushFactor = getConfig().getDouble("Abilities.Avatar.AvatarState.Air.AirBlast.Push.Self");
@@ -160,7 +155,7 @@ public class AirBlast extends AirAbility {
 		this.canExtinguishBlocks = getConfig().getBoolean("Abilities.Air.AirBlast.CanExtinguishBlocks");
 		this.canCoolLava = getConfig().getBoolean("Abilities.Air.AirBlast.CanCoolLava.Enabled");
 		this.canCoolLavaDuration = getConfig().getLong("Abilities.Air.AirBlast.CanCoolLava.Duration");
-		this.permCoolLava = getConfig().getBoolean("Abilities.Air.AirBlast.CanCoolLava.Permanent");
+		this.revertCoolLava = getConfig().getBoolean("Abilities.Air.AirBlast.CanCoolLava.Revert");
 
 		this.isFromOtherOrigin = false;
 		this.showParticles = true;
@@ -231,7 +226,7 @@ public class AirBlast extends AirAbility {
 			return false;
 		}
 
-		if ((!block.isPassable() || block.isLiquid()) && !this.affectedLevers.contains(block)) {
+		if ((!block.isPassable() || block.isLiquid()) && !this.affectedLevers.contains(block) && !Arrays.asList(DOORS).contains(block.getType()) && !Arrays.asList(TDOORS).contains(block.getType())) {
 			if (this.canCoolLava && block.getType() == Material.LAVA) {
 				if (LavaFlow.isLavaFlowBlock(block)) {
 					LavaFlow.removeBlock(block); // TODO: Make more generic for future lava generating moves.
@@ -242,7 +237,7 @@ public class AirBlast extends AirAbility {
 					else
 						tempBlock = new TempBlock(block, Material.COBBLESTONE);
 					tempBlock.getBlock().getWorld().playSound(tempBlock.getLocation(), Sound.BLOCK_LAVA_EXTINGUISH, 0.2F, 1);
-					if (!this.permCoolLava) {
+					if (this.revertCoolLava) {
 						tempBlock.setRevertTime(this.canCoolLavaDuration);
 					}
 				}
@@ -415,14 +410,11 @@ public class AirBlast extends AirAbility {
 
 					final BlockFace bf = GeneralMethods.getBlockFaceFromValue(i, dims[i]);
 
-					if (bf == face) {
-						if (!door.isOpen()) {
-							return false;
-						}
-					} else if (bf.getOppositeFace() == face) {
-						if (door.isOpen()) {
-							return false;
-						}
+					if (bf == face && door.isOpen()) {
+						return false;
+					}
+					if (bf.getOppositeFace() == face && !door.isOpen()) {
+						return false;
 					}
 				}
 
@@ -646,12 +638,36 @@ public class AirBlast extends AirAbility {
 		this.canPressButtons = canPressButtons;
 	}
 
+	public boolean isCanExtinguishBlocks() {
+		return this.canExtinguishBlocks;
+	}
+
+	public void setCanExtinguishBlocks(final boolean canExtinguishBlocks) {
+		this.canExtinguishBlocks = canExtinguishBlocks;
+	}
+
 	public boolean isCanCoolLava() {
 		return this.canCoolLava;
 	}
 
 	public void setCanCoolLava(final boolean canCoolLava) {
 		this.canCoolLava = canCoolLava;
+	}
+
+	public long getCanCoolLavaDuration() {
+		return this.canCoolLavaDuration;
+	}
+
+	public void setCanCoolLavaDuration(final long canCoolLavaDuration) {
+		this.canCoolLavaDuration = canCoolLavaDuration;
+	}
+
+	public boolean isRevertCoolLava() {
+		return this.revertCoolLava;
+	}
+
+	public void setRevertCoolLava(final boolean revertCoolLava) {
+		this.revertCoolLava = revertCoolLava;
 	}
 
 	public boolean isFromOtherOrigin() {

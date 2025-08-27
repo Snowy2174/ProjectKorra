@@ -113,6 +113,9 @@ public class ConfigManager {
 			    config.addDefault("Board.Extras.SurgeWave", Element.WATER.getColor().getName());
 			    config.addDefault("Board.Extras.SpoutHop", Element.WATER.getColor().getName());
 				config.addDefault("Board.Extras.IceSpikeField", Element.ICE.getColor().getName());
+				config.addDefault("Board.Extras.AirBurst", Element.AIR.getColor().getName());
+				config.addDefault("Board.Extras.AirBurstCone", Element.AIR.getColor().getName());
+				config.addDefault("Board.Extras.AirBurstFall", Element.AIR.getColor().getName());
 			}
 
 			config.addDefault("Extras.Water.NightMessage", "Your waterbending has become empowered due to the moon rising.");
@@ -918,18 +921,35 @@ public class ConfigManager {
 			config.addDefault("Abilities.Air.AirBlast.CanExtinguishBlocks", true);
 			config.addDefault("Abilities.Air.AirBlast.CanCoolLava.Enabled", true);
 			config.addDefault("Abilities.Air.AirBlast.CanCoolLava.Duration", 36000);
-			config.addDefault("Abilities.Air.AirBlast.CanCoolLava.Permanent", false);
+			config.addDefault("Abilities.Air.AirBlast.CanCoolLava.Revert", true);
 
 			config.addDefault("Abilities.Air.AirBurst.Enabled", true);
-			config.addDefault("Abilities.Air.AirBurst.FallThreshold", 10);
-			config.addDefault("Abilities.Air.AirBurst.PushFactor", 2.8);
 			config.addDefault("Abilities.Air.AirBurst.ChargeTime", 1750);
-			config.addDefault("Abilities.Air.AirBurst.Damage", 0);
-			config.addDefault("Abilities.Air.AirBurst.Cooldown", 0);
 			config.addDefault("Abilities.Air.AirBurst.SneakParticles", 10);
 			config.addDefault("Abilities.Air.AirBurst.ParticlePercentage", 50);
 			config.addDefault("Abilities.Air.AirBurst.AnglePhi", 10);
 			config.addDefault("Abilities.Air.AirBurst.AngleTheta", 10);
+			config.addDefault("Abilities.Air.AirBurst.CanFlickLevers", false);
+			config.addDefault("Abilities.Air.AirBurst.CanOpenDoors", false);
+			config.addDefault("Abilities.Air.AirBurst.CanPressButtons", false);
+			config.addDefault("Abilities.Air.AirBurst.CanExtinguishBlocks", false);
+			config.addDefault("Abilities.Air.AirBurst.PushFactor", 2.8);
+			config.addDefault("Abilities.Air.AirBurst.Damage", 0);
+			config.addDefault("Abilities.Air.AirBurst.Cooldown", 0);
+			config.addDefault("Abilities.Air.AirBurst.Range", 20);
+			config.addDefault("Abilities.Air.AirBurst.SeparateChargeTimes", false);
+			config.addDefault("Abilities.Air.AirBurst.Fall.Threshold", 10);
+			config.addDefault("Abilities.Air.AirBurst.Fall.Cooldown", 0);
+			config.addDefault("Abilities.Air.AirBurst.Fall.Damage", 0);
+			config.addDefault("Abilities.Air.AirBurst.Fall.Range", 20);
+			config.addDefault("Abilities.Air.AirBurst.Fall.PushFactor", 2.8);
+			config.addDefault("Abilities.Air.AirBurst.Cone.ChargeTime", 1000L);
+			config.addDefault("Abilities.Air.AirBurst.Cone.Cooldown", 500L);
+			config.addDefault("Abilities.Air.AirBurst.Cone.PushFactor", 2.0);
+			config.addDefault("Abilities.Air.AirBurst.Cone.Damage", 1.0);
+			config.addDefault("Abilities.Air.AirBurst.Cone.Range", 20);
+			config.addDefault("Abilities.Air.AirBurst.Cone.Angle", 30.0);
+			config.addDefault("Abilities.Air.AirBurst.Cone.ParticleCount", 8);
 
 			config.addDefault("Abilities.Air.AirScooter.Enabled", true);
 			config.addDefault("Abilities.Air.AirScooter.ShowSitting", false);
@@ -967,6 +987,10 @@ public class ConfigManager {
 			config.addDefault("Abilities.Air.AirSuction.Cooldown", 500);
 			config.addDefault("Abilities.Air.AirSuction.Particles", 6);
 			config.addDefault("Abilities.Air.AirSuction.SelectParticles", 6);
+			config.addDefault("Abilities.Air.AirSuction.CanFlickLevers", true);
+			config.addDefault("Abilities.Air.AirSuction.CanOpenDoors", true);
+			config.addDefault("Abilities.Air.AirSuction.CanPressButtons", false);
+			config.addDefault("Abilities.Air.AirSuction.CanExtinguishBlocks", false);
 
 			config.addDefault("Abilities.Air.AirSwipe.Enabled", true);
 			config.addDefault("Abilities.Air.AirSwipe.Damage", 2);
