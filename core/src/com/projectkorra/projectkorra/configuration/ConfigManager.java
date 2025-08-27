@@ -859,6 +859,7 @@ public class ConfigManager {
 			config.addDefault("Properties.Earth.MudSound.Sound", "BLOCK_MUD_PLACE");
 			config.addDefault("Properties.Earth.MudSound.Volume", 1);
 			config.addDefault("Properties.Earth.MudSound.Pitch", 1);
+			config.addDefault("Properties.Earth.LavaDamage", 4);
 
 			config.addDefault("Properties.Fire.CanBendWithWeapons", true);
 			config.addDefault("Properties.Fire.DayFactor", 1.25);
@@ -933,7 +934,7 @@ public class ConfigManager {
 			config.addDefault("Abilities.Air.AirBurst.CanOpenDoors", false);
 			config.addDefault("Abilities.Air.AirBurst.CanPressButtons", false);
 			config.addDefault("Abilities.Air.AirBurst.CanExtinguishBlocks", false);
-			config.addDefault("Abilities.Air.AirBurst.PushFactor", 2.8);
+			config.addDefault("Abilities.Air.AirBurst.PushFactor", 1); // @TODO footnote
 			config.addDefault("Abilities.Air.AirBurst.Damage", 0);
 			config.addDefault("Abilities.Air.AirBurst.Cooldown", 0);
 			config.addDefault("Abilities.Air.AirBurst.Range", 20);
@@ -942,10 +943,10 @@ public class ConfigManager {
 			config.addDefault("Abilities.Air.AirBurst.Fall.Cooldown", 0);
 			config.addDefault("Abilities.Air.AirBurst.Fall.Damage", 0);
 			config.addDefault("Abilities.Air.AirBurst.Fall.Range", 20);
-			config.addDefault("Abilities.Air.AirBurst.Fall.PushFactor", 2.8);
+			config.addDefault("Abilities.Air.AirBurst.Fall.PushFactor", 1);
 			config.addDefault("Abilities.Air.AirBurst.Cone.ChargeTime", 1000L);
 			config.addDefault("Abilities.Air.AirBurst.Cone.Cooldown", 500L);
-			config.addDefault("Abilities.Air.AirBurst.Cone.PushFactor", 2.0);
+			config.addDefault("Abilities.Air.AirBurst.Cone.PushFactor", 1);
 			config.addDefault("Abilities.Air.AirBurst.Cone.Damage", 1.0);
 			config.addDefault("Abilities.Air.AirBurst.Cone.Range", 20);
 			config.addDefault("Abilities.Air.AirBurst.Cone.Angle", 30.0);
@@ -960,7 +961,7 @@ public class ConfigManager {
 			config.addDefault("Abilities.Air.AirScooter.Duration", 0);
 			config.addDefault("Abilities.Air.AirScooter.MaxHeightFromGround", 7);
 			config.addDefault("Abilities.Air.AirScooter.ClimbHeight", 1);
-			config.addDefault("Abilities.Air.AirScooter.DynamicCooldown", false);
+			config.addDefault("Abilities.Air.AirScooter.DynamicCooldown", false); // @TODO footnote
 			config.addDefault("Abilities.Air.AirScooter.MinimumCooldown", 2000);
 
 			config.addDefault("Abilities.Air.AirShield.Enabled", true);

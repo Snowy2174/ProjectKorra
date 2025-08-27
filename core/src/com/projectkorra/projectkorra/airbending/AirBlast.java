@@ -136,6 +136,7 @@ public class AirBlast extends AirAbility {
 		}
 
 		this.pushFactor *= modifiedPushFactor;
+		this.pushFactorForOthers *= modifiedPushFactor;
 
 		this.start();
 	}
