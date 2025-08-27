@@ -28,10 +28,14 @@ public class AirScooter extends AirAbility {
 	private double radius;
 	@Attribute(Attribute.COOLDOWN)
 	private long cooldown;
+	private long minimumCooldown;
+	private boolean scaledCooldown;
 	@Attribute(Attribute.DURATION)
 	private long duration;
 	@Attribute(Attribute.HEIGHT)
 	private double maxHeightFromGround;
+	@Attribute("Climb " + Attribute.HEIGHT)
+	private double maxClimbHeight;
 	private Block floorblock;
 	private Random random;
 	private ArrayList<Double> angles;
@@ -57,8 +61,11 @@ public class AirScooter extends AirAbility {
 		this.interval = getConfig().getDouble("Abilities.Air.AirScooter.Interval");
 		this.radius = getConfig().getDouble("Abilities.Air.AirScooter.Radius");
 		this.cooldown = getConfig().getLong("Abilities.Air.AirScooter.Cooldown");
+		this.minimumCooldown = getConfig().getLong("Abilities.Air.AirScooter.MinimumCooldown");
+		this.scaledCooldown = getConfig().getBoolean("Abilities.Air.AirScooter.DynamicCooldown");
 		this.duration = getConfig().getLong("Abilities.Air.AirScooter.Duration");
 		this.maxHeightFromGround = getConfig().getDouble("Abilities.Air.AirScooter.MaxHeightFromGround");
+		this.maxClimbHeight = getConfig().getDouble("Abilities.Air.AirScooter.ClimbHeight");
 		this.useslime = getConfig().getBoolean("Abilities.Air.AirScooter.ShowSitting");
 		this.random = new Random();
 		this.angles = new ArrayList<>();
@@ -121,13 +128,46 @@ public class AirScooter extends AirAbility {
 		}
 	}
 
+	/**
+	 * Checks if a block is in front of the player and determines if it can be climbed.
+	 *
+	 * @return true if an obstacle is detected that cannot be climbed
+	 */
+	private boolean checkForObstacles() {
+		if (this.maxClimbHeight <= 1) return false;
+
+		Vector direction = this.player.getEyeLocation().getDirection().clone().normalize();
+		direction.setY(0).normalize().multiply(1.2);
+
+		Location checkLoc = this.player.getLocation().add(direction);
+		Block block = checkLoc.getBlock();
+
+		if (GeneralMethods.isSolid(block)) {
+			for (int i = 1; i <= this.maxClimbHeight; i++) {
+				Block above = block.getRelative(BlockFace.UP, i);
+				if (!GeneralMethods.isSolid(above)) {
+					Vector velocity = this.player.getVelocity().clone();
+					velocity.setY(0.5);
+
+					if (this.useslime) {
+						GeneralMethods.setVelocity(this, this.slime, velocity);
+					} else {
+						GeneralMethods.setVelocity(this, this.player, velocity);
+					}
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
 	@Override
 	public void progress() {
 		if (!this.bPlayer.canBendIgnoreBindsCooldowns(this)) {
 			this.remove();
 			return;
 		} else if (this.duration > 0 && System.currentTimeMillis() > this.getStartTime() + this.duration) {
-			this.bPlayer.addCooldown(this);
 			this.remove();
 			return;
 		}
@@ -139,13 +179,16 @@ public class AirScooter extends AirAbility {
 		}
 
 		if (this.player.isSneaking()) {
-			this.bPlayer.addCooldown(this);
 			this.remove();
 			return;
 		}
 
 		if (this.useslime && (this.slime == null || !this.slime.getPassengers().contains(this.player))) {
-			this.bPlayer.addCooldown(this);
+			this.remove();
+			return;
+		}
+
+		if (checkForObstacles()) {
 			this.remove();
 			return;
 		}
@@ -221,7 +264,15 @@ public class AirScooter extends AirAbility {
 			this.slime.remove();
 		}
 		this.flightHandler.removeInstance(this.player, this.getName());
-		this.bPlayer.addCooldown(this);
+
+		if (this.cooldown >= 0) {
+			long finalCooldown = this.cooldown;
+			if (this.scaledCooldown && this.duration > 0) {
+				double t = Math.min((System.currentTimeMillis() - this.getStartTime()) / (double) this.duration, 1.0);
+				finalCooldown = Math.max((long) (this.cooldown * t), this.minimumCooldown);
+			}
+			this.bPlayer.addCooldown(this, finalCooldown);
+		}
 	}
 
 	/*
@@ -324,5 +375,29 @@ public class AirScooter extends AirAbility {
 
 	public void setCooldown(final long cooldown) {
 		this.cooldown = cooldown;
+	}
+
+	public long getMinimumCooldown() {
+		return this.minimumCooldown;
+	}
+
+	public void setMinimumCooldown(final long minimumCooldown) {
+		this.minimumCooldown = minimumCooldown;
+	}
+
+	public boolean isScaledCooldown() {
+		return this.scaledCooldown;
+	}
+
+	public void setScaledCooldown(final boolean scaledCooldown) {
+		this.scaledCooldown = scaledCooldown;
+	}
+
+	public double getMaxClimbHeight() {
+		return this.maxClimbHeight;
+	}
+
+	public void setMaxClimbHeight(final double maxClimbHeight) {
+		this.maxClimbHeight = maxClimbHeight;
 	}
 }
