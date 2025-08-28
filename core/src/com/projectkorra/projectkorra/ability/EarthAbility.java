@@ -371,6 +371,10 @@ public abstract class EarthAbility extends ElementalAbility {
 		return null;
 	}
 
+	public Double getLavaDamage() {
+		return getConfig().getDouble("Properties.Earth.LavaDamage");
+	}
+
 	public static double getMetalAugment(final double value) {
 		return value * getConfig().getDouble("Properties.Earth.MetalPowerFactor");
 	}

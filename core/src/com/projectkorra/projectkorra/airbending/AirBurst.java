@@ -110,11 +110,34 @@ public class AirBurst extends AirAbility {
 			return;
 		}
 
-		this.isCharged = mode == BurstMode.CONE || mode == BurstMode.FALL;
+		this.setFields();
+
+		if (mode == BurstMode.FALL) {
+			if (this.playerFallDistance >= this.fallThreshold) {
+				this.executeBurst();
+				this.bPlayer.addCooldown("AirBurstFall", this.fallCooldown);
+				this.remove();
+			} else {
+				this.remove();
+			}
+			return;
+		}
+
+		if (mode == BurstMode.CONE) {
+			this.bPlayer.addCooldown("AirBurstCone", this.coneCooldown);
+			this.executeBurst();
+			this.remove();
+			return;
+		}
+		this.start();
+	}
+
+	public void setFields() {
+		this.isCharged = this.burstMode == BurstMode.CONE || this.burstMode == BurstMode.FALL;
 		this.playerFallDistance = player.getFallDistance();
+
 		this.chargeTime = getConfig().getLong("Abilities.Air.AirBurst.ChargeTime");
 		this.coneChargeTime = getConfig().getLong("Abilities.Air.AirBurst.Cone.ChargeTime");
-
 		this.sphereCooldown = getConfig().getLong("Abilities.Air.AirBurst.Cooldown");
 		this.coneCooldown = getConfig().getLong("Abilities.Air.AirBurst.Cone.Cooldown");
 		this.fallCooldown = getConfig().getLong("Abilities.Air.AirBurst.Fall.Cooldown");
@@ -139,27 +162,9 @@ public class AirBurst extends AirAbility {
 		this.coneParticles = getConfig().getInt("Abilities.Air.AirBurst.Cone.ParticleCount", getConfig().getInt("Abilities.Air.AirBurst.Particles", 8));
 		this.sneakParticles = getConfig().getInt("Abilities.Air.AirBurst.SneakParticles");
 		this.particlePercentage = getConfig().getDouble("Abilities.Air.AirBurst.ParticlePercentage");
+
 		this.blasts = new ArrayList<>();
 		this.affectedEntities = new ArrayList<>();
-
-		if (mode == BurstMode.FALL) {
-			if (this.playerFallDistance >= this.fallThreshold) {
-				this.executeBurst();
-				this.bPlayer.addCooldown("AirBurstFall", this.fallCooldown);
-				this.remove();
-			} else {
-				this.remove();
-			}
-			return;
-		}
-
-		if (mode == BurstMode.CONE) {
-			this.bPlayer.addCooldown("AirBurstCone", this.coneCooldown);
-			this.executeBurst();
-			this.remove();
-			return;
-		}
-		this.start();
 	}
 
 	/**

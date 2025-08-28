@@ -20,8 +20,4 @@ public abstract class LavaAbility extends EarthAbility implements SubAbility {
 		return Element.LAVA;
 	}
 
-	public Double getLavaDamage() {
-		return getConfig().getDouble("Properties.Earth.LavaDamage");
-	}
-
 }

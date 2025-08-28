@@ -113,9 +113,11 @@ public class ConfigManager {
 			    config.addDefault("Board.Extras.SurgeWave", Element.WATER.getColor().getName());
 			    config.addDefault("Board.Extras.SpoutHop", Element.WATER.getColor().getName());
 				config.addDefault("Board.Extras.IceSpikeField", Element.ICE.getColor().getName());
-				config.addDefault("Board.Extras.AirBurst", Element.AIR.getColor().getName());
 				config.addDefault("Board.Extras.AirBurstCone", Element.AIR.getColor().getName());
 				config.addDefault("Board.Extras.AirBurstFall", Element.AIR.getColor().getName());
+				config.addDefault("Board.Extras.FireBurstCone", Element.FIRE.getColor().getName());
+				config.addDefault("Board.Extras.ShockwaveCone", Element.EARTH.getColor().getName());
+				config.addDefault("Board.Extras.ShockwaveFall", Element.EARTH.getColor().getName());
 			}
 
 			config.addDefault("Extras.Water.NightMessage", "Your waterbending has become empowered due to the moon rising.");
@@ -1533,6 +1535,16 @@ public class ConfigManager {
 			config.addDefault("Abilities.Earth.Shockwave.Knockback", 1.1);
 			config.addDefault("Abilities.Earth.Shockwave.Range", 15);
 			config.addDefault("Abilities.Earth.Shockwave.Angle", 40);
+			config.addDefault("Abilities.Earth.Shockwave.SeparateChargeTimes", true);
+			config.addDefault("Abilities.Earth.Shockwave.Cone.ChargeTime", 2500);
+			config.addDefault("Abilities.Earth.Shockwave.Cone.Cooldown", 6000);
+			config.addDefault("Abilities.Earth.Shockwave.Cone.Range", 15);
+			config.addDefault("Abilities.Earth.Shockwave.Cone.Damage", 4);
+			config.addDefault("Abilities.Earth.Shockwave.Cone.Knockback", 1.1);
+			config.addDefault("Abilities.Earth.Shockwave.Fall.Cooldown", 6000);
+			config.addDefault("Abilities.Earth.Shockwave.Fall.Range", 15);
+			config.addDefault("Abilities.Earth.Shockwave.Fall.Damage", 4);
+			config.addDefault("Abilities.Earth.Shockwave.Fall.Knockback", 1.1);
 
 			config.addDefault("Abilities.Earth.Tremorsense.Enabled", true);
 			config.addDefault("Abilities.Earth.Tremorsense.MaxDepth", 10);
@@ -1599,6 +1611,14 @@ public class ConfigManager {
 			config.addDefault("Abilities.Fire.FireBurst.AnglePhi", 10);
 			config.addDefault("Abilities.Fire.FireBurst.AngleTheta", 10);
 			config.addDefault("Abilities.Fire.FireBurst.ParticlesPercentage", 5);
+			config.addDefault("Abilities.Fire.FireBurst.ParticleCount", 1);
+			config.addDefault("Abilities.Fire.FireBurst.SeparateChargeTimes", true);
+			config.addDefault("Abilities.Fire.FireBurst.Cone.Damage", 2);
+			config.addDefault("Abilities.Fire.FireBurst.Cone.ChargeTime", 3500);
+			config.addDefault("Abilities.Fire.FireBurst.Cone.Cooldown", 0);
+			config.addDefault("Abilities.Fire.FireBurst.Cone.Range", 14);
+			config.addDefault("Abilities.Fire.FireBurst.Cone.Angle", 30);
+			config.addDefault("Abilities.Fire.FireBurst.Cone.ParticleCount", 1);
 
 			config.addDefault("Abilities.Fire.FireJet.Enabled", true);
 			config.addDefault("Abilities.Fire.FireJet.Speed", 0.8);

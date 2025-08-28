@@ -42,15 +42,48 @@ public class Ripple extends EarthAbility {
 	private Block block4;
 	private ArrayList<Location> locations = new ArrayList<Location>();
 	private ArrayList<Entity> entities = new ArrayList<Entity>();
+	private Shockwave.ShockwaveMode shockwaveMode;
 
+	/**
+	 * Creates a new Ripple instance with mode-specific attributes
+	 *
+	 * @param player The player creating the ripple
+	 * @param direction The direction vector
+	 * @param mode The shockwave mode being used
+	 * @param range The range for this specific mode
+	 * @param damage The damage for this specific mode
+	 * @param knockback The knockback for this specific mode
+	 */
+	public Ripple(final Player player, final Vector direction, final Shockwave.ShockwaveMode mode,
+				  final double range, final double damage, final double knockback) {
+		super(player);
+		this.setNoiseReduction(3);
+		this.range = range;
+		this.damage = damage;
+		this.knockback = knockback;
+		this.shockwaveMode = mode;
+		this.initialize(player, this.getInitialLocation(player, direction), direction);
+	}
+
+	/**
+	 * Legacy constructor for backward compatibility
+	 */
 	public Ripple(final Player player, final Vector direction) {
 		super(player);
 		this.setNoiseReduction(3);
+		this.range = getConfig().getDouble("Abilities.Earth.Shockwave.Range");
+		this.damage = getConfig().getDouble("Abilities.Earth.Shockwave.Damage");
+		this.knockback = getConfig().getDouble("Abilities.Earth.Shockwave.Knockback");
+		this.shockwaveMode = Shockwave.ShockwaveMode.AREA;
 		this.initialize(player, this.getInitialLocation(player, direction), direction);
 	}
 
 	public Ripple(final Player player, final Location origin, final Vector direction) {
 		super(player);
+		this.range = getConfig().getDouble("Abilities.Earth.Shockwave.Range");
+		this.damage = getConfig().getDouble("Abilities.Earth.Shockwave.Damage");
+		this.knockback = getConfig().getDouble("Abilities.Earth.Shockwave.Knockback");
+		this.shockwaveMode = Shockwave.ShockwaveMode.AREA;
 		this.initialize(player, origin, direction);
 	}
 
@@ -59,9 +92,6 @@ public class Ripple extends EarthAbility {
 			return;
 		}
 
-		this.range = getConfig().getDouble("Abilities.Earth.Shockwave.Range");
-		this.damage = getConfig().getDouble("Abilities.Earth.Shockwave.Damage");
-		this.knockback = getConfig().getDouble("Abilities.Earth.Shockwave.Knockback");
 		this.direction = direction.clone().normalize();
 		this.origin = origin.clone();
 		this.location = origin.clone();
@@ -340,6 +370,14 @@ public class Ripple extends EarthAbility {
 		return this.locations;
 	}
 
+	public Shockwave.ShockwaveMode getShockwaveMode() {
+		return this.shockwaveMode;
+	}
+
+	public void setShockwaveMode(Shockwave.ShockwaveMode mode) {
+		this.shockwaveMode = mode;
+	}
+
 	public int getStep() {
 		return this.step;
 	}
@@ -435,5 +473,4 @@ public class Ripple extends EarthAbility {
 	public void setLocation(final Location location) {
 		this.location = location;
 	}
-
 }
