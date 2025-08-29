@@ -1,19 +1,20 @@
 package com.projectkorra.projectkorra.airbending;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import org.bukkit.Location;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Player;
-
 import com.projectkorra.projectkorra.GeneralMethods;
 import com.projectkorra.projectkorra.ability.AirAbility;
 import com.projectkorra.projectkorra.ability.ElementalAbility;
 import com.projectkorra.projectkorra.ability.util.Collision;
 import com.projectkorra.projectkorra.attribute.Attribute;
+import com.projectkorra.projectkorra.util.ParticleEffect;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class AirSpout extends AirAbility {
 
@@ -28,12 +29,17 @@ public class AirSpout extends AirAbility {
 	private long cooldown;
 	@Attribute(Attribute.HEIGHT)
 	private double height;
+	private long deactivationCooldown;
+	private long collisionCooldown;
+	private boolean deactivationCooldownEnabled;
+	private boolean collisionCooldownEnabled;
 
 	public AirSpout(final Player player) {
 		super(player);
 
 		final AirSpout spout = getAbility(player, AirSpout.class);
 		if (spout != null) {
+			this.bPlayer.addCooldown(spout, spout.deactivationCooldownEnabled ? spout.deactivationCooldown : spout.cooldown);
 			spout.remove();
 			return;
 		}
@@ -42,12 +48,7 @@ public class AirSpout extends AirAbility {
 			return;
 		}
 
-		this.angle = 0;
-		this.cooldown = getConfig().getLong("Abilities.Air.AirSpout.Cooldown");
-		this.duration = getConfig().getLong("Abilities.Air.AirSpout.Duration");
-		this.animTime = System.currentTimeMillis();
-		this.interval = getConfig().getLong("Abilities.Air.AirSpout.Interval");
-		this.height = getConfig().getDouble("Abilities.Air.AirSpout.Height");
+		this.setFields();
 
 		final double heightRemoveThreshold = 2;
 		if (!this.isWithinMaxSpoutHeight(heightRemoveThreshold)) {
@@ -57,6 +58,19 @@ public class AirSpout extends AirAbility {
 		this.flightHandler.createInstance(player, this.getName());
 
 		this.start();
+	}
+
+	private void setFields() {
+		this.angle = 0;
+		this.cooldown = getConfig().getLong("Abilities.Air.AirSpout.Cooldown");
+		this.duration = getConfig().getLong("Abilities.Air.AirSpout.Duration");
+		this.animTime = System.currentTimeMillis();
+		this.interval = getConfig().getLong("Abilities.Air.AirSpout.Interval");
+		this.height = getConfig().getDouble("Abilities.Air.AirSpout.Height");
+		this.collisionCooldownEnabled = getConfig().getBoolean("Abilities.Air.AirSpout.Collision.SeparateCooldown");
+		this.collisionCooldown = getConfig().getLong("Abilities.Air.AirSpout.Collision.Cooldown");
+		this.deactivationCooldownEnabled = getConfig().getBoolean("Abilities.Air.AirSpout.Deactivation.SeparateCooldown");
+		this.deactivationCooldown = getConfig().getLong("Abilities.Air.AirSpout.Deactivation.Cooldown");
 	}
 
 	/**
@@ -146,6 +160,7 @@ public class AirSpout extends AirAbility {
 
 		final Block eyeBlock = this.player.getEyeLocation().getBlock();
 		if (ElementalAbility.isWater(eyeBlock) || GeneralMethods.isSolid(eyeBlock)) {
+			this.bPlayer.addCooldown(this);
 			this.remove();
 			return;
 		}
@@ -167,6 +182,7 @@ public class AirSpout extends AirAbility {
 			}
 			this.rotateAirColumn(block);
 		} else {
+			this.bPlayer.addCooldown(this);
 			this.remove();
 		}
 	}
@@ -196,6 +212,15 @@ public class AirSpout extends AirAbility {
 				final Location effectloc2 = new Location(location.getWorld(), location.getX(), block.getY() + i, location.getZ());
 				playAirbendingParticles(effectloc2, 3, 0.4F, 0.4F, 0.4F);
 			}
+		}
+	}
+
+	@Override
+	public void handleCollision(final Collision collision) {
+		if (collision.isRemovingFirst()) {
+			ParticleEffect.BLOCK_CRACK.display(collision.getLocationFirst(), 10, 1, 1, 1, 0.1, Material.WHITE_WOOL.createBlockData());
+			this.bPlayer.addCooldown(this, this.collisionCooldownEnabled ? this.collisionCooldown : this.cooldown);
+			this.remove();
 		}
 	}
 

@@ -9,13 +9,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ConfigManager {
 
@@ -982,6 +976,10 @@ public class ConfigManager {
 			config.addDefault("Abilities.Air.AirSpout.Duration", 0);
 			config.addDefault("Abilities.Air.AirSpout.Height", 16);
 			config.addDefault("Abilities.Air.AirSpout.Interval", 100);
+			config.addDefault("Abilities.Air.AirSpout.Collision.SeparateCooldown", false);
+			config.addDefault("Abilities.Air.AirSpout.Collision.Cooldown", 2000);
+			config.addDefault("Abilities.Air.AirSpout.Deactivation.SeparateCooldown", false);
+			config.addDefault("Abilities.Air.AirSpout.Deactivation.Cooldown", 2000);
 
 			config.addDefault("Abilities.Air.AirSuction.Enabled", true);
 			config.addDefault("Abilities.Air.AirSuction.Speed", 25);
