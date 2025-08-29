@@ -1,22 +1,5 @@
 package com.projectkorra.projectkorra.airbending;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-
-import com.projectkorra.projectkorra.region.RegionProtection;
-import org.bukkit.Effect;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.data.type.Door;
-import org.bukkit.block.data.type.TrapDoor;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
-
 import com.projectkorra.projectkorra.GeneralMethods;
 import com.projectkorra.projectkorra.ProjectKorra;
 import com.projectkorra.projectkorra.ability.AirAbility;
@@ -25,12 +8,35 @@ import com.projectkorra.projectkorra.ability.util.Collision;
 import com.projectkorra.projectkorra.attribute.Attribute;
 import com.projectkorra.projectkorra.command.Commands;
 import com.projectkorra.projectkorra.object.HorizontalVelocityTracker;
+import com.projectkorra.projectkorra.region.RegionProtection;
 import com.projectkorra.projectkorra.waterbending.WaterSpout;
+import org.bukkit.Effect;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.type.Door;
+import org.bukkit.block.data.type.Switch;
+import org.bukkit.block.data.type.TrapDoor;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 public class AirSuction extends AirAbility {
 
-	private final List<Block> affectedDoors = new ArrayList<>();
+	private final List<Block> affectedSwitches = new ArrayList<>();
 
+	private boolean canFlickLevers;
+	private boolean canOpenDoors;
+	private boolean canPressButtons;
+	private boolean canExtinguishBlocks;
 	private boolean progressing;
 	private int particleCount;
 	@Attribute(Attribute.COOLDOWN)
@@ -74,17 +80,7 @@ public class AirSuction extends AirAbility {
 			return;
 		}
 
-		this.progressing = false;
-		this.particleCount = getConfig().getInt("Abilities.Air.AirSuction.Particles");
-		this.speed = getConfig().getDouble("Abilities.Air.AirSuction.Speed");
-		this.range = getConfig().getDouble("Abilities.Air.AirSuction.Range");
-		this.radius = getConfig().getDouble("Abilities.Air.AirSuction.Radius");
-		this.pushFactor = getConfig().getDouble("Abilities.Air.AirSuction.Push.Self");
-		this.pushFactorForOthers = getConfig().getDouble("Abilities.Air.AirSuction.Push.Others");
-		this.cooldown = getConfig().getLong("Abilities.Air.AirSuction.Cooldown");
-		this.random = new Random();
-		this.origin = this.getTargetLocation();
-		this.canAffectSelf = true;
+		this.setFields();
 
 		if (RegionProtection.isRegionProtected(player, this.origin, this.getName())) {
 			return;
@@ -95,6 +91,24 @@ public class AirSuction extends AirAbility {
 		this.start();
 	}
 
+	private void setFields() {
+		this.progressing = false;
+		this.particleCount = getConfig().getInt("Abilities.Air.AirSuction.Particles");
+		this.speed = getConfig().getDouble("Abilities.Air.AirSuction.Speed");
+		this.range = getConfig().getDouble("Abilities.Air.AirSuction.Range");
+		this.radius = getConfig().getDouble("Abilities.Air.AirSuction.Radius");
+		this.pushFactor = getConfig().getDouble("Abilities.Air.AirSuction.Push.Self");
+		this.pushFactorForOthers = getConfig().getDouble("Abilities.Air.AirSuction.Push.Others");
+		this.cooldown = getConfig().getLong("Abilities.Air.AirSuction.Cooldown");
+		this.canFlickLevers = getConfig().getBoolean("Abilities.Air.AirSuction.CanFlickLevers");
+		this.canOpenDoors = getConfig().getBoolean("Abilities.Air.AirSuction.CanOpenDoors");
+		this.canPressButtons = getConfig().getBoolean("Abilities.Air.AirSuction.CanPressButtons");
+		this.canExtinguishBlocks = getConfig().getBoolean("Abilities.Air.AirSuction.CanExtinguishBlocks");
+		this.random = new Random();
+		this.origin = this.getTargetLocation();
+		this.canAffectSelf = true;
+	}
+
 	private void advanceLocation() {
 		playAirbendingParticles(this.location, this.particleCount, 0.275F, 0.275F, 0.275F);
 		if (this.random.nextInt(4) == 0) {
@@ -103,20 +117,18 @@ public class AirSuction extends AirAbility {
 		final double speedFactor = this.speed * (ProjectKorra.time_step / 1000.);
 		this.location = this.location.add(this.direction.clone().multiply(speedFactor));
 
-		if ((Arrays.asList(AirBlast.DOORS).contains(this.location.getBlock().getType()) || Arrays.asList(AirBlast.TDOORS).contains(this.location.getBlock().getType())) && !this.affectedDoors.contains(this.location.getBlock())) {
+		if (!this.affectedSwitches.contains(this.location.getBlock())) {
 			this.handleDoorMechanics(this.location.getBlock());
 		}
 	}
 
 	private void handleDoorMechanics(final Block block) {
-		boolean tDoor = false;
-		boolean open = false;
-
-		if (Arrays.asList(AirBlast.DOORS).contains(block.getType())) {
-			final Door door = (Door) block.getBlockData();
-			final BlockFace face = door.getFacing();
-			final Vector toPlayer = GeneralMethods.getDirection(block.getLocation(), this.player.getLocation().getBlock().getLocation());
-			final double[] dims = { toPlayer.getX(), toPlayer.getY(), toPlayer.getZ() };
+		if (this.canOpenDoors && Arrays.asList(AirBlast.DOORS).contains(block.getType())) {
+			if (block.getBlockData() instanceof Door) {
+				final Door door = (Door) block.getBlockData();
+				final BlockFace face = door.getFacing();
+				final Vector toPlayer = GeneralMethods.getDirection(block.getLocation(), this.player.getLocation().getBlock().getLocation());
+				final double[] dims = {toPlayer.getX(), toPlayer.getY(), toPlayer.getZ()};
 
 			for (int i = 0; i < 3; i++) {
 				if (i == 1) {
@@ -135,45 +147,91 @@ public class AirSuction extends AirAbility {
 				}
 			}
 
-			door.setOpen(!door.isOpen());
-			block.setBlockData(door);
-			open = door.isOpen();
-		} else {
-			tDoor = true;
-			final TrapDoor trap = (TrapDoor) block.getBlockData();
-
-			if (this.origin.getY() < block.getY()) {
-				if (trap.isOpen()) {
-					return;
+				door.setOpen(!door.isOpen());
+				block.setBlockData(door);
+				block.getWorld().playSound(block.getLocation(), Sound.valueOf("BLOCK_WOODEN_DOOR_" + (door.isOpen() ? "OPEN" : "CLOSE")), 0.5f, 0);
+				this.affectedSwitches.add(block);
+				return;
+			}
+		} else if (this.canOpenDoors && Arrays.asList(AirBlast.TDOORS).contains(block.getType())) {
+			if (block.getBlockData() instanceof TrapDoor) {
+				final TrapDoor trap = (TrapDoor) block.getBlockData();
+				if (this.origin.getY() < block.getY()) {
+					if (!trap.isOpen()) return;
+				} else {
+					if (trap.isOpen()) return;
 				}
-			} else {
-				if (!trap.isOpen()) {
-					return;
+				trap.setOpen(!trap.isOpen());
+				block.setBlockData(trap);
+				block.getWorld().playSound(block.getLocation(), Sound.valueOf("BLOCK_WOODEN_TRAPDOOR_" + (trap.isOpen() ? "OPEN" : "CLOSE")), 0.5f, 0);
+				this.affectedSwitches.add(block);
+				return;
+			}
+		} else if (this.canPressButtons && Arrays.asList(AirBlast.BUTTONS).contains(block.getType())) {
+			if (block.getBlockData() instanceof Switch) {
+				final Switch button = (Switch) block.getBlockData();
+				if (!button.isPowered()) {
+					button.setPowered(true);
+					block.setBlockData(button);
+					this.affectedSwitches.add(block);
+					new BukkitRunnable() {
+
+						@Override
+						public void run() {
+							button.setPowered(false);
+							block.setBlockData(button);
+							AirSuction.this.affectedSwitches.remove(block);
+							block.getWorld().playSound(block.getLocation(), Sound.BLOCK_WOODEN_BUTTON_CLICK_OFF, 0.5f, 0);
+						}
+
+					}.runTaskLater(ProjectKorra.plugin, 15);
+				}
+				block.getWorld().playSound(block.getLocation(), Sound.BLOCK_WOODEN_BUTTON_CLICK_ON, 0.5f, 0);
+				return;
+			}
+		} else if (this.canFlickLevers && block.getType() == Material.LEVER) {
+			if (block.getBlockData() instanceof Switch) {
+				final Switch lever = (Switch) block.getBlockData();
+				lever.setPowered(!lever.isPowered());
+				block.setBlockData(lever);
+				this.affectedSwitches.add(block);
+				block.getWorld().playSound(block.getLocation(), Sound.BLOCK_LEVER_CLICK, 0.5f, 0);
+				return;
+			}
+		} else if (this.canExtinguishBlocks && (block.getType().toString().contains("CANDLE") || block.getType().toString().contains("CAMPFIRE") || block.getType() == Material.REDSTONE_WALL_TORCH)) {
+			if (block.getBlockData() instanceof org.bukkit.block.data.Lightable) {
+				final org.bukkit.block.data.Lightable lightable = (org.bukkit.block.data.Lightable) block.getBlockData();
+				if (lightable.isLit()) {
+					lightable.setLit(false);
+					block.setBlockData(lightable);
+					block.getWorld().playEffect(block.getLocation(), Effect.EXTINGUISH, 0);
 				}
 			}
-
-			trap.setOpen(!trap.isOpen());
-			block.setBlockData(trap);
-			open = trap.isOpen();
 		}
-
-		final String sound = "block_wooden_" + (tDoor ? "trap" : "") + "door_" + (!open ? "open" : "close");
-		block.getWorld().playSound(block.getLocation(), sound, 0.5f, 0);
-		this.affectedDoors.add(block);
 	}
 
 	private Location getTargetLocation() {
-		final Material[] ignore = new Material[getTransparentMaterials().length + AirBlast.DOORS.length + AirBlast.TDOORS.length];
+		int size = getTransparentMaterials().length
+				+ AirBlast.DOORS.length
+				+ AirBlast.TDOORS.length
+				+ AirBlast.BUTTONS.length
+				+ 1;
 
-		for (int i = 0; i < ignore.length; i++) {
-			if (i < getTransparentMaterials().length) {
-				ignore[i] = getTransparentMaterials()[i];
-			} else if (i < getTransparentMaterials().length + AirBlast.DOORS.length) {
-				ignore[i] = AirBlast.DOORS[i - getTransparentMaterials().length];
-			} else {
-				ignore[i] = AirBlast.TDOORS[i - getTransparentMaterials().length - AirBlast.DOORS.length];
-			}
+		final Material[] ignore = new Material[size];
+		int index = 0;
+		for (Material mat : getTransparentMaterials()) {
+			ignore[index++] = mat;
 		}
+		for (Material mat : AirBlast.DOORS) {
+			ignore[index++] = mat;
+		}
+		for (Material mat : AirBlast.TDOORS) {
+			ignore[index++] = mat;
+		}
+		for (Material mat : AirBlast.BUTTONS) {
+			ignore[index++] = mat;
+		}
+		ignore[index] = Material.LEVER;
 
 		return GeneralMethods.getTargetedLocation(this.player, getSelectRange(), ignore);
 	}
@@ -421,6 +479,38 @@ public class AirSuction extends AirAbility {
 
 	public static double getSelectRange() {
 		return getConfig().getDouble("Abilities.Air.AirSuction.SelectRange");
+	}
+
+	public boolean isCanFlickLevers() {
+		return this.canFlickLevers;
+	}
+
+	public void setCanFlickLevers(final boolean canFlickLevers) {
+		this.canFlickLevers = canFlickLevers;
+	}
+
+	public boolean isCanOpenDoors() {
+		return this.canOpenDoors;
+	}
+
+	public void setCanOpenDoors(final boolean canOpenDoors) {
+		this.canOpenDoors = canOpenDoors;
+	}
+
+	public boolean isCanPressButtons() {
+		return this.canPressButtons;
+	}
+
+	public void setCanPressButtons(final boolean canPressButtons) {
+		this.canPressButtons = canPressButtons;
+	}
+
+	public boolean isCanExtinguishBlocks() {
+		return this.canExtinguishBlocks;
+	}
+
+	public void setCanExtinguishBlocks(final boolean canExtinguishBlocks) {
+		this.canExtinguishBlocks = canExtinguishBlocks;
 	}
 
 }
