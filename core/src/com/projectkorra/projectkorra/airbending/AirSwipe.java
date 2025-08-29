@@ -1,22 +1,5 @@
 package com.projectkorra.projectkorra.airbending;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.block.data.Levelled;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.BlockIterator;
-import org.bukkit.util.Vector;
-
 import com.projectkorra.projectkorra.GeneralMethods;
 import com.projectkorra.projectkorra.ProjectKorra;
 import com.projectkorra.projectkorra.ability.AirAbility;
@@ -29,10 +12,27 @@ import com.projectkorra.projectkorra.command.Commands;
 import com.projectkorra.projectkorra.earthbending.lava.LavaFlow;
 import com.projectkorra.projectkorra.util.DamageHandler;
 import com.projectkorra.projectkorra.util.TempBlock;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.Levelled;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.BlockIterator;
+import org.bukkit.util.Vector;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AirSwipe extends AirAbility {
 
-	// Limiting the entities reduces the risk of crashing.
+	// Limiting the entities reduces the risk of crashing. However, should this hardcoded value be made configurable?
 	private static final int MAX_AFFECTABLE_ENTITIES = 10;
 
 	private boolean charging;
@@ -55,6 +55,11 @@ public class AirSwipe extends AirAbility {
 	private double range;
 	@Attribute(Attribute.RADIUS)
 	private double radius;
+	private boolean canCoolLava;
+	private long canCoolLavaDuration;
+	private boolean revertCoolLava;
+	private boolean affectSnow;
+	private boolean breakPlants;
 	private double maxChargeFactor;
 	private Location origin;
 	private Random random;
@@ -79,21 +84,7 @@ public class AirSwipe extends AirAbility {
 		}
 
 		this.charging = charging;
-		this.origin = GeneralMethods.getMainHandLocation(player);
-		this.particles = getConfig().getInt("Abilities.Air.AirSwipe.Particles");
-		this.arc = getConfig().getInt("Abilities.Air.AirSwipe.Arc");
-		this.arcIncrement = getConfig().getInt("Abilities.Air.AirSwipe.StepSize");
-		this.maxChargeTime = getConfig().getLong("Abilities.Air.AirSwipe.MaxChargeTime");
-		this.cooldown = getConfig().getLong("Abilities.Air.AirSwipe.Cooldown");
-		this.damage = getConfig().getDouble("Abilities.Air.AirSwipe.Damage");
-		this.pushFactor = getConfig().getDouble("Abilities.Air.AirSwipe.Push");
-		this.speed = getConfig().getDouble("Abilities.Air.AirSwipe.Speed") * (ProjectKorra.time_step / 1000.0);
-		this.range = getConfig().getDouble("Abilities.Air.AirSwipe.Range");
-		this.radius = getConfig().getDouble("Abilities.Air.AirSwipe.Radius");
-		this.maxChargeFactor = getConfig().getDouble("Abilities.Air.AirSwipe.ChargeFactor");
-		this.random = new Random();
-		this.streams = new ConcurrentHashMap<>();
-		this.affectedEntities = new ArrayList<>();
+		this.setFields();
 
 		if (this.bPlayer.isOnCooldown(this) || player.getEyeLocation().getBlock().isLiquid()) {
 			this.remove();
@@ -110,6 +101,29 @@ public class AirSwipe extends AirAbility {
 		}
 
 		this.start();
+	}
+
+	private void setFields() {
+		this.origin = GeneralMethods.getMainHandLocation(player);
+		this.particles = getConfig().getInt("Abilities.Air.AirSwipe.Particles");
+		this.arc = getConfig().getInt("Abilities.Air.AirSwipe.Arc");
+		this.arcIncrement = getConfig().getInt("Abilities.Air.AirSwipe.StepSize");
+		this.maxChargeTime = getConfig().getLong("Abilities.Air.AirSwipe.MaxChargeTime");
+		this.cooldown = getConfig().getLong("Abilities.Air.AirSwipe.Cooldown");
+		this.damage = getConfig().getDouble("Abilities.Air.AirSwipe.Damage");
+		this.pushFactor = getConfig().getDouble("Abilities.Air.AirSwipe.Push");
+		this.speed = getConfig().getDouble("Abilities.Air.AirSwipe.Speed") * (ProjectKorra.time_step / 1000.0);
+		this.range = getConfig().getDouble("Abilities.Air.AirSwipe.Range");
+		this.radius = getConfig().getDouble("Abilities.Air.AirSwipe.Radius");
+		this.maxChargeFactor = getConfig().getDouble("Abilities.Air.AirSwipe.ChargeFactor");
+		this.canCoolLava = getConfig().getBoolean("Abilities.Air.AirSwipe.CanCoolLava.Enabled");
+		this.canCoolLavaDuration = getConfig().getLong("Abilities.Air.AirSwipe.CanCoolLava.Duration");
+		this.revertCoolLava = getConfig().getBoolean("Abilities.Air.AirSwipe.CanCoolLava.Revert");
+		this.affectSnow = getConfig().getBoolean("Abilities.Air.AirSwipe.BreakSnow");
+		this.breakPlants = getConfig().getBoolean("Abilities.Air.AirSwipe.BreakPlants");
+		this.random = new Random();
+		this.streams = new ConcurrentHashMap<>();
+		this.affectedEntities = new ArrayList<>();
 	}
 
 	/**
@@ -184,19 +198,31 @@ public class AirSwipe extends AirAbility {
 
 				if (!isAir(block.getType())) {
 					if (block.getType().equals(Material.SNOW)) {
-						return true;
+						if (this.affectSnow) {
+							block.setType(Material.AIR); // Should this check for temp blocks instead of all snow?
+						}
+						return this.affectSnow;
 					} else if (isPlant(block.getType())) {
-						block.breakNaturally();
+						if (this.breakPlants) {
+							block.breakNaturally();
+						}
 						return false;
-					} else if (isLava(block)) {
+					} else if (this.canCoolLava && isLava(block)) {
 						if (LavaFlow.isLavaFlowBlock(block)) {
-							LavaFlow.removeBlock(block);
-							return false;// TODO: Make more generic for future lava generating moves.
-						} else if (block.getBlockData() instanceof Levelled && ((Levelled) block.getBlockData()).getLevel() == 0) {
-							new TempBlock(block, Material.OBSIDIAN);
-							return false;
+							LavaFlow.removeBlock(block); // TODO: Make more generic for future lava generating moves.
 						} else {
-							new TempBlock(block, Material.COBBLESTONE);
+							Levelled lavaData = (Levelled) block.getBlockData();
+							Material cooledType = (lavaData.getLevel() == 0) ? Material.OBSIDIAN : Material.COBBLESTONE;
+							TempBlock tempBlock = new TempBlock(block, cooledType);
+							tempBlock.getBlock().getWorld().playSound(
+									tempBlock.getLocation(),
+									Sound.BLOCK_LAVA_EXTINGUISH,
+									0.2F,
+									1
+							);
+							if (this.revertCoolLava) {
+								tempBlock.setRevertTime(this.canCoolLavaDuration);
+							}
 							return false;
 						}
 					} else {
@@ -458,6 +484,30 @@ public class AirSwipe extends AirAbility {
 
 	public void setArcIncrement(final int arcIncrement) {
 		this.arcIncrement = arcIncrement;
+	}
+
+	public boolean isCanCoolLava() {
+		return this.canCoolLava;
+	}
+
+	public void setCanCoolLava(final boolean canCoolLava) {
+		this.canCoolLava = canCoolLava;
+	}
+
+	public long getCanCoolLavaDuration() {
+		return this.canCoolLavaDuration;
+	}
+
+	public void setCanCoolLavaDuration(final long canCoolLavaDuration) {
+		this.canCoolLavaDuration = canCoolLavaDuration;
+	}
+
+	public boolean isRevertCoolLava() {
+		return this.revertCoolLava;
+	}
+
+	public void setRevertCoolLava(final boolean revertCoolLava) {
+		this.revertCoolLava = revertCoolLava;
 	}
 
 }

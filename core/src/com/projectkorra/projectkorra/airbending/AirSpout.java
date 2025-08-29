@@ -301,4 +301,36 @@ public class AirSpout extends AirAbility {
 		this.cooldown = cooldown;
 	}
 
+	public long getDeactivationCooldown() {
+		return this.deactivationCooldown;
+	}
+
+	public void setDeactivationCooldown(final long deactivationCooldown) {
+		this.deactivationCooldown = deactivationCooldown;
+	}
+
+	public long getCollisionCooldown() {
+		return this.collisionCooldown;
+	}
+
+	public void setCollisionCooldown(final long collisionCooldown) {
+		this.collisionCooldown = collisionCooldown;
+	}
+
+	public boolean isDeactivationCooldownEnabled() {
+		return this.deactivationCooldownEnabled;
+	}
+
+	public void setDeactivationCooldownEnabled(final boolean deactivationCooldownEnabled) {
+		this.deactivationCooldownEnabled = deactivationCooldownEnabled;
+	}
+
+	public boolean isCollisionCooldownEnabled() {
+		return this.collisionCooldownEnabled;
+	}
+
+	public void setCollisionCooldownEnabled(final boolean collisionCooldownEnabled) {
+		this.collisionCooldownEnabled = collisionCooldownEnabled;
+	}
+
 }
