@@ -865,6 +865,7 @@ public class ConfigManager {
 			config.addDefault("Properties.Earth.MudSound.Volume", 1);
 			config.addDefault("Properties.Earth.MudSound.Pitch", 1);
 			config.addDefault("Properties.Earth.LavaDamage", 4);
+			config.addDefault("Properties.Earth.LavaGriefing", false);
 
 			config.addDefault("Properties.Fire.CanBendWithWeapons", true);
 			config.addDefault("Properties.Fire.DayFactor", 1.25);
