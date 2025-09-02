@@ -1,26 +1,25 @@
 package com.projectkorra.projectkorra.waterbending;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-
-import com.projectkorra.projectkorra.attribute.markers.DayNightFactor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffectType;
-
 import com.projectkorra.projectkorra.GeneralMethods;
 import com.projectkorra.projectkorra.ability.ElementalAbility;
 import com.projectkorra.projectkorra.ability.WaterAbility;
 import com.projectkorra.projectkorra.ability.util.Collision;
 import com.projectkorra.projectkorra.attribute.Attribute;
+import com.projectkorra.projectkorra.attribute.markers.DayNightFactor;
 import com.projectkorra.projectkorra.util.ParticleEffect;
 import com.projectkorra.projectkorra.util.TempBlock;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class WaterSpout extends WaterAbility {
 
@@ -31,11 +30,14 @@ public class WaterSpout extends WaterAbility {
 	private boolean canBendOnPackedIce;
 	private boolean useParticles;
 	private boolean useBlockSpiral;
+	private boolean collisionCooldownEnabled;
 	private int angle;
 	private long time;
 	private long interval;
 	@Attribute(Attribute.COOLDOWN) @DayNightFactor(invert = true)
 	private long cooldown;
+	@Attribute("Collision" + Attribute.COOLDOWN) @DayNightFactor(invert = true)
+	private long collisionCooldown;
 	@Attribute(Attribute.DURATION) @DayNightFactor
 	private long duration;
 	private long startTime;
@@ -60,20 +62,8 @@ public class WaterSpout extends WaterAbility {
 			return;
 		}
 
-		this.canBendOnPackedIce = getConfig().getStringList("Properties.Water.IceBlocks").contains(Material.PACKED_ICE.toString());
-		this.useParticles = getConfig().getBoolean("Abilities.Water.WaterSpout.Particles");
-		this.useBlockSpiral = getConfig().getBoolean("Abilities.Water.WaterSpout.BlockSpiral");
-		this.cooldown = getConfig().getLong("Abilities.Water.WaterSpout.Cooldown");
-		this.height = getConfig().getDouble("Abilities.Water.WaterSpout.Height");
-		this.interval = getConfig().getLong("Abilities.Water.WaterSpout.Interval");
-		this.duration = getConfig().getLong("Abilities.Water.WaterSpout.Duration");
-		this.startTime = System.currentTimeMillis();
+		this.setFields();
 
-		this.canSpoutHop = getConfig().getBoolean("Abilities.Water.WaterSpout.SpoutHop.Enabled");
-		this.spoutHopPower = getConfig().getDouble("Abilities.Water.WaterSpout.SpoutHop.Power");
-		this.spoutHopCooldown = getConfig().getLong("Abilities.Water.WaterSpout.SpoutHop.Cooldown");
-
-		this.maxHeight = this.height;
 		this.recalculateAttributes();
 		final WaterSpoutWave spoutWave = new WaterSpoutWave(player, WaterSpoutWave.AbilityType.CLICK);
 		if (spoutWave.isStarted() && !spoutWave.isRemoved()) {
@@ -95,10 +85,32 @@ public class WaterSpout extends WaterAbility {
 		if (!this.isWithinMaxSpoutHeight(topBlock.getLocation(), heightRemoveThreshold)) {
 			return;
 		}
+		if (bPlayer.isOnCooldown(this)) { // To maintain legacy behavior, since Wave uses its own ability cooldown, should a boolean be added to allow spout to ignore its own cooldown?
+			return;
+		}
 		this.flightHandler.createInstance(player, this.getName());
 		player.setAllowFlight(true);
 		this.spoutableWaterHeight(player.getLocation()); // Sets base.
 		this.start();
+	}
+
+	private void setFields() {
+		this.canBendOnPackedIce = getConfig().getStringList("Properties.Water.IceBlocks").contains(Material.PACKED_ICE.toString());
+		this.useParticles = getConfig().getBoolean("Abilities.Water.WaterSpout.Particles");
+		this.useBlockSpiral = getConfig().getBoolean("Abilities.Water.WaterSpout.BlockSpiral");
+		this.cooldown = getConfig().getLong("Abilities.Water.WaterSpout.Cooldown");
+		this.collisionCooldownEnabled = getConfig().getBoolean("Abilities.Water.WaterSpout.Collision.SeparateCooldown");
+		this.collisionCooldown = getConfig().getLong("Abilities.Water.WaterSpout.Collision.Cooldown");
+		this.height = getConfig().getDouble("Abilities.Water.WaterSpout.Height");
+		this.interval = getConfig().getLong("Abilities.Water.WaterSpout.Interval");
+		this.duration = getConfig().getLong("Abilities.Water.WaterSpout.Duration");
+		this.startTime = System.currentTimeMillis();
+
+		this.canSpoutHop = getConfig().getBoolean("Abilities.Water.WaterSpout.SpoutHop.Enabled");
+		this.spoutHopPower = getConfig().getDouble("Abilities.Water.WaterSpout.SpoutHop.Power");
+		this.spoutHopCooldown = getConfig().getLong("Abilities.Water.WaterSpout.SpoutHop.Cooldown");
+
+		this.maxHeight = this.height;
 	}
 
 	private void hop() {
@@ -212,6 +224,17 @@ public class WaterSpout extends WaterAbility {
 			tb.revertBlock();
 		}
 		this.flightHandler.removeInstance(this.player, this.getName());
+	}
+
+	@Override
+	public void handleCollision(Collision collision) {
+		if (collision.isRemovingFirst()) {
+			if (this.collisionCooldownEnabled) {
+				this.bPlayer.addCooldown(this.getName(), this.collisionCooldown);
+			} else {
+				this.bPlayer.addCooldown(this);
+			}
+		}
 	}
 
 	public void revertBaseBlock() {
@@ -339,7 +362,6 @@ public class WaterSpout extends WaterAbility {
 					final Location spoutLoc = base.clone().add(0, d, 0);
 					if (loc0.getWorld().equals(spoutLoc.getWorld()) && loc0.distance(spoutLoc) <= radius) {
 						removed = true;
-						spout.remove();
 					}
 				}
 			}
@@ -477,8 +499,23 @@ public class WaterSpout extends WaterAbility {
 		return canSpoutHop;
 	}
 
+	public boolean isCollisionCooldownEnabled() {
+		return collisionCooldownEnabled;
+	}
+
+	public void setCollisionCooldownEnabled(boolean collisionCooldownEnabled) {
+		this.collisionCooldownEnabled = collisionCooldownEnabled;
+	}
+
+	public long getCollisionCooldown() {
+		return collisionCooldown;
+	}
+
+	public void setCollisionCooldown(long collisionCooldown) {
+		this.collisionCooldown = collisionCooldown;
+	}
+
 	public static Map<Block, Block> getAffectedBlocks() {
 		return AFFECTED_BLOCKS;
 	}
-
 }

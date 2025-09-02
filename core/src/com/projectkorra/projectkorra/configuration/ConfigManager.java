@@ -120,6 +120,7 @@ public class ConfigManager {
 				config.addDefault("Board.Extras.FireBurstCone", Element.FIRE.getColor().getName());
 				config.addDefault("Board.Extras.ShockwaveCone", Element.EARTH.getColor().getName());
 				config.addDefault("Board.Extras.ShockwaveFall", Element.EARTH.getColor().getName());
+				config.addDefault("Board.Extras.WaterSpoutWave", Element.WATER.getColor().getName());
 			}
 
 			config.addDefault("Extras.Water.NightMessage", "Your waterbending has become empowered due to the moon rising.");
@@ -1332,6 +1333,8 @@ public class ConfigManager {
 			config.addDefault("Abilities.Water.WaterSpout.SpoutHop.Enabled", true);
 			config.addDefault("Abilities.Water.WaterSpout.SpoutHop.Power", 0.85);
 			config.addDefault("Abilities.Water.WaterSpout.SpoutHop.Cooldown", 0);
+			config.addDefault("Abilities.Water.WaterSpout.Collision.SeparateCooldown", false);
+			config.addDefault("Abilities.Water.WaterSpout.Collision.Cooldown", 2000);
 
 			config.addDefault("Abilities.Water.WaterSpout.Wave.Particles", false);
 			config.addDefault("Abilities.Water.WaterSpout.Wave.Enabled", true);
