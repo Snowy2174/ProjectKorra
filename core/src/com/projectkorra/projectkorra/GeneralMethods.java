@@ -851,7 +851,7 @@ public class GeneralMethods {
 		final Vector direction = origin.getDirection();
 		final Location location = origin.clone();
 		final Vector vec = direction.multiply(0.2);
-		final Set<Material> ignore = toIgnore == null ? Set.of() : Set.of(toIgnore);
+		final Set<Material> ignore = toIgnore == null ? Set.of() : new HashSet<>(Arrays.asList(toIgnore));
 
 		for (double i = 0; i < range; i += 0.2) {
 			location.add(vec);

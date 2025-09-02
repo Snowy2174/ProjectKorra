@@ -6,7 +6,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.projectkorra.projectkorra.BendingPlayer;
+import com.projectkorra.projectkorra.Element;
+import com.projectkorra.projectkorra.GeneralMethods;
+import com.projectkorra.projectkorra.ProjectKorra;
+import com.projectkorra.projectkorra.ability.util.Collision;
+import com.projectkorra.projectkorra.firebending.HeatControl;
 import com.projectkorra.projectkorra.region.RegionProtection;
+import com.projectkorra.projectkorra.util.BlockSource;
+import com.projectkorra.projectkorra.util.ParticleEffect;
+import com.projectkorra.projectkorra.util.TempBlock;
+import com.projectkorra.projectkorra.waterbending.SurgeWall;
+import com.projectkorra.projectkorra.waterbending.SurgeWave;
+import com.projectkorra.projectkorra.waterbending.Torrent;
+import com.projectkorra.projectkorra.waterbending.WaterSpout;
+import com.projectkorra.projectkorra.waterbending.ice.PhaseChange;
+import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -18,21 +33,6 @@ import org.bukkit.block.data.Levelled;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
-import com.projectkorra.projectkorra.BendingPlayer;
-import com.projectkorra.projectkorra.Element;
-import com.projectkorra.projectkorra.GeneralMethods;
-import com.projectkorra.projectkorra.ProjectKorra;
-import com.projectkorra.projectkorra.ability.util.Collision;
-import com.projectkorra.projectkorra.firebending.HeatControl;
-import com.projectkorra.projectkorra.util.BlockSource;
-import com.projectkorra.projectkorra.util.ParticleEffect;
-import com.projectkorra.projectkorra.util.TempBlock;
-import com.projectkorra.projectkorra.waterbending.SurgeWall;
-import com.projectkorra.projectkorra.waterbending.SurgeWave;
-import com.projectkorra.projectkorra.waterbending.Torrent;
-import com.projectkorra.projectkorra.waterbending.WaterSpout;
-import com.projectkorra.projectkorra.waterbending.ice.PhaseChange;
-import com.projectkorra.projectkorra.waterbending.multiabilities.WaterArms;
 
 public abstract class WaterAbility extends ElementalAbility {
 	public static final Map<Material, Material> WATER_TRANSFORMABLE_BLOCKS = getWaterTransformableBlocks();
@@ -287,7 +287,24 @@ public abstract class WaterAbility extends ElementalAbility {
 	}
 	
 	public static boolean isCauldron(final Material material) {
-		return GeneralMethods.getMCVersion() >= 1170 && (material == Material.getMaterial("WATER_CAULDRON") || material == Material.getMaterial("POWDER_SNOW_CAULDRON"));
+		return GeneralMethods.getMCVersion() >= 1170 && (material == Material.getMaterial("CAULDRON") || material == Material.getMaterial("WATER_CAULDRON") || material == Material.getMaterial("POWDER_SNOW_CAULDRON"));
+	}
+
+	// This method is only the Sourcing logic, adding the boolean sourcable to check if the cauldron can be sourced from.
+	public static boolean isCauldron(final Block block, final boolean sourcable) {
+		if (!sourcable) return isCauldron(block);
+		if (GeneralMethods.getMCVersion() >= 1170) {
+			if ((block.getType() == Material.getMaterial("WATER_CAULDRON") || block.getType() == Material.getMaterial("POWDER_SNOW_CAULDRON"))
+					&& block.getBlockData() instanceof Levelled) {
+				return ((Levelled) block.getBlockData()).getLevel() >= 1;
+			}
+			return false;
+		} else {
+			if (block.getType() == Material.CAULDRON && block.getBlockData() instanceof Levelled) {
+				return ((Levelled) block.getBlockData()).getLevel() >= 1;
+			}
+			return false;
+		}
 	}
 
 	public static boolean isSponge(final Block block) {
@@ -449,6 +466,7 @@ public abstract class WaterAbility extends ElementalAbility {
 
 	public static boolean updateSourceBlock(final Block sourceBlock) {
 		if (isCauldron(sourceBlock)) {
+			if (!isCauldron(sourceBlock, true)) return false;
 			GeneralMethods.setCauldronData(sourceBlock, ((Levelled) sourceBlock.getBlockData()).getLevel() - 1);
 			return true;
 		} else if (isTransformableBlock(sourceBlock)) {

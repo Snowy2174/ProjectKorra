@@ -213,9 +213,7 @@ public class AirSuction extends AirAbility {
 	private Location getTargetLocation() {
 		int size = getTransparentMaterials().length
 				+ AirBlast.DOORS.length
-				+ AirBlast.TDOORS.length
-				+ AirBlast.BUTTONS.length
-				+ 1;
+				+ AirBlast.TDOORS.length;
 
 		final Material[] ignore = new Material[size];
 		int index = 0;
@@ -228,10 +226,6 @@ public class AirSuction extends AirAbility {
 		for (Material mat : AirBlast.TDOORS) {
 			ignore[index++] = mat;
 		}
-		for (Material mat : AirBlast.BUTTONS) {
-			ignore[index++] = mat;
-		}
-		ignore[index] = Material.LEVER;
 
 		return GeneralMethods.getTargetedLocation(this.player, getSelectRange(), ignore);
 	}

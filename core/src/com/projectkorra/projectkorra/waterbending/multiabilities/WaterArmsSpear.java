@@ -150,6 +150,9 @@ public class WaterArmsSpear extends WaterAbility {
 		for (int i = 0; i < 2; i++) {
 			for (final Entity entity : GeneralMethods.getEntitiesAroundPoint(this.location, 2)) {
 				if (entity instanceof LivingEntity && entity.getEntityId() != this.player.getEntityId() && !(entity instanceof ArmorStand)) {
+					if (GeneralMethods.isObstructed(this.location, entity.getLocation())) {
+						continue;
+					}
 					this.hitEntity = true;
 					this.location = entity.getLocation();
 

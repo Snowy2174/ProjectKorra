@@ -37,6 +37,8 @@ import com.projectkorra.projectkorra.util.ParticleEffect;
 import com.projectkorra.projectkorra.util.TempBlock;
 import com.projectkorra.projectkorra.waterbending.util.WaterSourceGrabber;
 
+import static com.projectkorra.projectkorra.GeneralMethods.checkDiagonalWall;
+
 public class IceBullet extends IceAbility implements ComboAbility {
 
 	public static enum AbilityState {
@@ -160,7 +162,7 @@ public class IceBullet extends IceAbility implements ComboAbility {
 			final FireComboStream fstream = (FireComboStream) this.tasks.get(i);
 			final Location loc = fstream.getLocation();
 
-			if (!isTransparent(this.player, loc.clone().add(0, 0.2, 0).getBlock())) {
+			if (!isTransparent(this.player, loc.clone().add(0, 0.2, 0).getBlock()) || checkDiagonalWall(loc.clone().add(0, 0.2, 0), fstream.getDirection())) {
 				fstream.remove();
 				return;
 			}
