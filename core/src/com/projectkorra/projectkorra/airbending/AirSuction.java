@@ -16,6 +16,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.Lightable;
 import org.bukkit.block.data.type.Door;
 import org.bukkit.block.data.type.Switch;
 import org.bukkit.block.data.type.TrapDoor;
@@ -168,20 +169,21 @@ public class AirSuction extends AirAbility {
 				return;
 			}
 		} else if (this.canPressButtons && Arrays.asList(AirBlast.BUTTONS).contains(block.getType())) {
-			if (block.getBlockData() instanceof Switch) {
-				final Switch button = (Switch) block.getBlockData();
+			if (block.getBlockData() instanceof Switch button) {
 				if (!button.isPowered()) {
 					button.setPowered(true);
-					block.setBlockData(button);
+					block.setBlockData(button, true);
 					this.affectedSwitches.add(block);
 					new BukkitRunnable() {
 
 						@Override
 						public void run() {
-							button.setPowered(false);
-							block.setBlockData(button);
+							if (block.getType() == button.getMaterial()) {
+								button.setPowered(false);
+								block.setBlockData(button, true);
+								block.getWorld().playSound(block.getLocation(), Sound.BLOCK_WOODEN_BUTTON_CLICK_OFF, 0.5f, 0);
+							}
 							AirSuction.this.affectedSwitches.remove(block);
-							block.getWorld().playSound(block.getLocation(), Sound.BLOCK_WOODEN_BUTTON_CLICK_OFF, 0.5f, 0);
 						}
 
 					}.runTaskLater(ProjectKorra.plugin, 15);
@@ -190,17 +192,15 @@ public class AirSuction extends AirAbility {
 				return;
 			}
 		} else if (this.canFlickLevers && block.getType() == Material.LEVER) {
-			if (block.getBlockData() instanceof Switch) {
-				final Switch lever = (Switch) block.getBlockData();
+			if (block.getBlockData() instanceof Switch lever) {
 				lever.setPowered(!lever.isPowered());
-				block.setBlockData(lever);
+				block.setBlockData(lever, true);
 				this.affectedSwitches.add(block);
 				block.getWorld().playSound(block.getLocation(), Sound.BLOCK_LEVER_CLICK, 0.5f, 0);
 				return;
 			}
 		} else if (this.canExtinguishBlocks && (block.getType().toString().contains("CANDLE") || block.getType().toString().contains("CAMPFIRE") || block.getType() == Material.REDSTONE_WALL_TORCH)) {
-			if (block.getBlockData() instanceof org.bukkit.block.data.Lightable) {
-				final org.bukkit.block.data.Lightable lightable = (org.bukkit.block.data.Lightable) block.getBlockData();
+			if (block.getBlockData() instanceof Lightable lightable) {
 				if (lightable.isLit()) {
 					lightable.setLit(false);
 					block.setBlockData(lightable);

@@ -449,21 +449,22 @@ public class AirBlast extends AirAbility {
 				testblock.getWorld().playSound(testblock.getLocation(), Sound.valueOf("BLOCK_WOODEN_TRAPDOOR_" + (tDoor.isOpen() ? "OPEN" : "CLOSE")), 0.5f, 0);
 			}
 		} else if (this.canPressButtons && Arrays.asList(BUTTONS).contains(testblock.getType())) {
-			if (testblock.getBlockData() instanceof Switch) {
-				final Switch button = (Switch) testblock.getBlockData();
+			if (testblock.getBlockData() instanceof Switch button) {
 				if (!button.isPowered()) {
 					button.setPowered(true);
-					testblock.setBlockData(button);
+					testblock.setBlockData(button, true);
 					this.affectedLevers.add(testblock);
 
 					new BukkitRunnable() {
 
 						@Override
 						public void run() {
-							button.setPowered(false);
-							testblock.setBlockData(button);
+							if (testblock.getType() == button.getMaterial()) {
+								button.setPowered(false);
+								testblock.setBlockData(button, true);
+								testblock.getWorld().playSound(testblock.getLocation(), Sound.BLOCK_WOODEN_BUTTON_CLICK_OFF, 0.5f, 0);
+							}
 							AirBlast.this.affectedLevers.remove(testblock);
-							testblock.getWorld().playSound(testblock.getLocation(), Sound.BLOCK_WOODEN_BUTTON_CLICK_OFF, 0.5f, 0);
 						}
 
 					}.runTaskLater(ProjectKorra.plugin, 15);
@@ -472,16 +473,14 @@ public class AirBlast extends AirAbility {
 				testblock.getWorld().playSound(testblock.getLocation(), Sound.BLOCK_WOODEN_BUTTON_CLICK_ON, 0.5f, 0);
 			}
 		} else if (this.canFlickLevers && testblock.getType() == Material.LEVER) {
-			if (testblock.getBlockData() instanceof Switch) {
-				final Switch lever = (Switch) testblock.getBlockData();
+			if (testblock.getBlockData() instanceof Switch lever) {
 				lever.setPowered(!lever.isPowered());
-				testblock.setBlockData(lever);
+				testblock.setBlockData(lever, true);
 				this.affectedLevers.add(testblock);
 				testblock.getWorld().playSound(testblock.getLocation(), Sound.BLOCK_LEVER_CLICK, 0.5f, 0);
 			}
 		} else if (this.canExtinguishBlocks && (testblock.getType().toString().contains("CANDLE") || testblock.getType().toString().contains("CAMPFIRE") || testblock.getType() == Material.REDSTONE_WALL_TORCH)) {
-			if (testblock.getBlockData() instanceof Lightable) {
-				final Lightable lightable = (Lightable) testblock.getBlockData();
+			if (testblock.getBlockData() instanceof Lightable lightable) {
 				if (lightable.isLit()) {
 					lightable.setLit(false);
 					testblock.setBlockData(lightable);

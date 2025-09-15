@@ -20,6 +20,7 @@ import com.projectkorra.projectkorra.ability.EarthAbility;
 import com.projectkorra.projectkorra.ability.ElementalAbility;
 import com.projectkorra.projectkorra.ability.FireAbility;
 import com.projectkorra.projectkorra.ability.FlightAbility;
+import com.projectkorra.projectkorra.ability.LavaAbility;
 import com.projectkorra.projectkorra.ability.WaterAbility;
 import com.projectkorra.projectkorra.ability.util.ComboManager;
 import com.projectkorra.projectkorra.ability.util.MultiAbilityManager;
@@ -174,6 +175,7 @@ import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.block.FluidLevelChangeEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
@@ -399,7 +401,7 @@ public class PKListener implements Listener {
 		//When a player places a block that isn't fire, remove the temp block that was there
 		Block block = event.getBlock();
 		Material heldType = event.getItemInHand().getType();
-		if (block != null && heldType != Material.FLINT_AND_STEEL && heldType != Material.FIRE_CHARGE) {
+		if (TempBlock.isTempBlock(block) && heldType != Material.FLINT_AND_STEEL && heldType != Material.FIRE_CHARGE) {
 			TempBlock.removeBlock(block);
 		}
 	}
